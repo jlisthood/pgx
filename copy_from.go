@@ -130,13 +130,16 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 				return
 			}
 
+			fmt.Printf("ct.rowSrc.Err() is %v", ct.rowSrc.Err())
 			if ct.rowSrc.Err() != nil {
 				w.CloseWithError(ct.rowSrc.Err())
 				return
 			}
 
 			if len(buf) > 0 {
+				fmt.Printf("writing buf....")
 				_, err = w.Write(buf)
+				fmt.Printf("write buf error is %v", err)
 				if err != nil {
 					w.Close()
 					return
