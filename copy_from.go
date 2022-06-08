@@ -137,18 +137,22 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 			}
 
 			if len(buf) > 0 {
-				fmt.Printf("writing buf....")
+				fmt.Printf("writing buf....\n")
 				_, err = w.Write(buf)
-				fmt.Printf("write buf error is %v", err)
+				fmt.Printf("write buf error is %v\n", err)
 				if err != nil {
+					fmt.Printf("going to close...\n")
 					w.Close()
+					fmt.Printf("close finished...\n")
 					return
 				}
 			}
 
+			fmt.Printf("reset buf\n")
 			buf = buf[:0]
 		}
 
+		fmt.Printf("closing...\n")
 		w.Close()
 	}()
 
@@ -190,8 +194,12 @@ func (ct *copyFrom) buildCopyBuf(buf []byte, sd *pgconn.StatementDescription) (b
 		buf = pgio.AppendInt16(buf, int16(len(ct.columnNames)))
 		for i, val := range values {
 			log.Printf("starting encode prepared statement for val %v index %v with DataTypeOID %v\n", val, i, sd.Fields[i].DataTypeOID)
+			lenBufBefore := len(buf)
+			expectedBufChange := sd.Fields[i].DataTypeSize
 			buf, err = encodePreparedStatementArgument(ct.conn.connInfo, buf, sd.Fields[i].DataTypeOID, val)
+			lenBufChange := len(buf) - lenBufBefore
 			log.Printf("buf is %v, err is %v\n", buf, err)
+			log.Printf("expected bug change is %v, actual change is %v", lenBufChange, expectedBufChange)
 			if err != nil {
 				return false, nil, err
 			}
