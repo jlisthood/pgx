@@ -124,7 +124,7 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 		for moreRows {
 			var err error
 			moreRows, buf, err = ct.buildCopyBuf(buf, sd)
-			fmt.Printf("moreRows %v, buf %v, err %v\n", moreRows, buf, err)
+			fmt.Printf("\nmoreRows %v, buf %v, err %v\n", moreRows, buf, err)
 			if err != nil {
 				w.CloseWithError(err)
 				return
@@ -154,6 +154,7 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 
 		fmt.Printf("closing...\n")
 		w.Close()
+		fmt.Printf("closing done...\n")
 	}()
 
 	startTime := time.Now()
@@ -193,13 +194,13 @@ func (ct *copyFrom) buildCopyBuf(buf []byte, sd *pgconn.StatementDescription) (b
 
 		buf = pgio.AppendInt16(buf, int16(len(ct.columnNames)))
 		for i, val := range values {
-			log.Printf("starting encode prepared statement for val %v index %v with DataTypeOID %v\n", val, i, sd.Fields[i].DataTypeOID)
+			log.Printf("\nstarting encode prepared statement for field %v with val %v index %v with DataTypeOID %v\n", sd.Fields[i].Name, val, i, sd.Fields[i].DataTypeOID)
 			lenBufBefore := len(buf)
 			expectedBufChange := sd.Fields[i].DataTypeSize
 			buf, err = encodePreparedStatementArgument(ct.conn.connInfo, buf, sd.Fields[i].DataTypeOID, val)
 			lenBufChange := len(buf) - lenBufBefore
-			log.Printf("buf is %v, err is %v\n", buf, err)
-			log.Printf("expected bug change is %v, actual change is %v", lenBufChange, expectedBufChange)
+			log.Printf("\nbuf is %v, err is %v\n\n", buf, err)
+			log.Printf("expected buf change is %v, actual change is %v\n", expectedBufChange, lenBufChange)
 			if err != nil {
 				return false, nil, err
 			}
