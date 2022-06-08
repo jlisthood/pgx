@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/jackc/pgconn"
@@ -116,11 +117,14 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 		buf = append(buf, "PGCOPY\n\377\r\n\000"...)
 		buf = pgio.AppendInt32(buf, 0)
 		buf = pgio.AppendInt32(buf, 0)
+		fmt.Printf("buf is %v", buf)
+		fmt.Printf("buf as string is %v", string(buf))
 
 		moreRows := true
 		for moreRows {
 			var err error
 			moreRows, buf, err = ct.buildCopyBuf(buf, sd)
+			fmt.Printf("moreRows %v, buf %v, err %v", moreRows, buf, err)
 			if err != nil {
 				w.CloseWithError(err)
 				return
@@ -147,7 +151,9 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 
 	startTime := time.Now()
 
-	commandTag, err := ct.conn.pgConn.CopyFrom(ctx, r, fmt.Sprintf("copy %s ( %s ) from stdin binary;", quotedTableName, quotedColumnNames))
+	copyFromCommand := fmt.Sprintf("copy %s ( %s ) from stdin binary;", quotedTableName, quotedColumnNames)
+	fmt.Printf("copyFromCommand is %s", copyFromCommand)
+	commandTag, err := ct.conn.pgConn.CopyFrom(ctx, r, copyFromCommand)
 
 	r.Close()
 	<-doneChan
@@ -166,19 +172,23 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 }
 
 func (ct *copyFrom) buildCopyBuf(buf []byte, sd *pgconn.StatementDescription) (bool, []byte, error) {
-
+	log.Printf("starting build copy buf, %v %v", buf, *sd)
 	for ct.rowSrc.Next() {
 		values, err := ct.rowSrc.Values()
 		if err != nil {
 			return false, nil, err
 		}
+
+		log.Printf("values %v err %v", values, err)
 		if len(values) != len(ct.columnNames) {
 			return false, nil, fmt.Errorf("expected %d values, got %d values", len(ct.columnNames), len(values))
 		}
 
 		buf = pgio.AppendInt16(buf, int16(len(ct.columnNames)))
 		for i, val := range values {
+			log.Printf("starting encode prepared statement for val %v index %v with DataTypeOID %v", val, i, sd.Fields[i].DataTypeOID)
 			buf, err = encodePreparedStatementArgument(ct.conn.connInfo, buf, sd.Fields[i].DataTypeOID, val)
+			log.Printf("buf is %v, err is %v", buf, err)
 			if err != nil {
 				return false, nil, err
 			}
