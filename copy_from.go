@@ -199,11 +199,12 @@ func (ct *copyFrom) buildCopyBuf(buf []byte, sd *pgconn.StatementDescription) (b
 			expectedBufChange := sd.Fields[i].DataTypeSize
 			buf, err = encodePreparedStatementArgument(ct.conn.connInfo, buf, sd.Fields[i].DataTypeOID, val)
 			lenBufChange := len(buf) - lenBufBefore
+			lenBufAfter := len(buf)
 			log.Printf("\nbuf is %v, err is %v\n\n", buf, err)
 			log.Printf("expected buf change is %v, actual change is %v\n", expectedBufChange, lenBufChange)
-			log.Printf("len before is %v len after is %v", lenBufBefore, lenBufChange)
-			log.Printf("new bytes added %v", buf[lenBufBefore:lenBufChange])
-			log.Printf("new bytes as string %v", string(buf[lenBufBefore:lenBufChange]))
+			log.Printf("len before is %v len after is %v\n", lenBufBefore, len(buf))
+			log.Printf("new bytes added %v\n", buf[lenBufBefore:lenBufAfter])
+			log.Printf("new bytes as string %v\n", string(buf[lenBufBefore:lenBufAfter]))
 			if err != nil {
 				return false, nil, err
 			}
