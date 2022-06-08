@@ -130,7 +130,7 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 				return
 			}
 
-			fmt.Printf("ct.rowSrc.Err() is %v", ct.rowSrc.Err())
+			fmt.Printf("ct.rowSrc.Err() is %v\n", ct.rowSrc.Err())
 			if ct.rowSrc.Err() != nil {
 				w.CloseWithError(ct.rowSrc.Err())
 				return
@@ -194,7 +194,7 @@ func (ct *copyFrom) buildCopyBuf(buf []byte, sd *pgconn.StatementDescription) (b
 
 		buf = pgio.AppendInt16(buf, int16(len(ct.columnNames)))
 		for i, val := range values {
-			log.Printf("\nstarting encode prepared statement for field %v with val %v index %v with DataTypeOID %v\n", sd.Fields[i].Name, val, i, sd.Fields[i].DataTypeOID)
+			log.Printf("\nstarting encode prepared statement for field %v with val %v index %v with DataTypeOID %v\n", string(sd.Fields[i].Name), val, i, sd.Fields[i].DataTypeOID)
 			lenBufBefore := len(buf)
 			expectedBufChange := sd.Fields[i].DataTypeSize
 			buf, err = encodePreparedStatementArgument(ct.conn.connInfo, buf, sd.Fields[i].DataTypeOID, val)
