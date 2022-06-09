@@ -153,7 +153,7 @@ func (ct *copyFrom) run(ctx context.Context) (int64, error) {
 		}
 
 		fmt.Printf("closing...\n")
-		_, err = w.Write([]byte{255, 255, 255})
+		_, err = w.Write([]byte{255, 255})
 		w.Close()
 		fmt.Printf("closing done...\n")
 	}()
